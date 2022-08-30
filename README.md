@@ -73,6 +73,12 @@ local PartyService = require(game.ReplicatedStorage.PartyService)
 
 PartyService:SetPartyServerEmulator()
 ```
+Getting the Party that the player is in
+```
+local PartyService = require(game.ReplicatedStorage.PartyService)
+
+PartyService:getPartyPlayerIsIn(Player)
+```
 for the complete api consult the script that comes with the module
 
 FAQ:
