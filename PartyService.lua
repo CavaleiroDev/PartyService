@@ -2,7 +2,7 @@ local RunService = game:GetService("RunService")
 local DatastoreService = game:GetService("DataStoreService")
 local TeleportService = game:GetService("TeleportService")
 
---local Configuration = require(script.Configuration) -- ð¤
+--local Configuration = require(script.Configuration) -- 🤐
 
 local ActivePartyServers
 
@@ -26,7 +26,7 @@ local Errors = {
 	[500] = "[500] Internal Script Error - %s",
 }
 
-local BlacklistedAttributes = {"Id", "Name", "Players", "PlayerAdded", "PlayerRemoved", "Bindables", "OwnerId", "PlaceId", "MaxPlayers"} -- ð¤
+local BlacklistedAttributes = {"Id", "Name", "Players", "PlayerAdded", "PlayerRemoved", "Bindables", "OwnerId", "PlaceId", "MaxPlayers"} -- 🤐
 
 local CreatedEvent = Instance.new("BindableEvent")
 local DeletedEvent = Instance.new("BindableEvent")
@@ -380,9 +380,10 @@ function module:RemovePlayer(PlayerToRemove, Party)
 	
 	local FindPlayer = table.find(Party.Players, PlayerToRemove)
 	if FindPlayer then
+		print(FindPlayer)
 		local IsOwner = module:IsPartyOwner(PlayerToRemove, Party)
 		local Players = module:GetPlayersInParty(Party)
-		table.remove(Players, FindPLayer)
+		table.remove(Players, FindPlayer)
 		if #Players > 0 then
 			if IsOwner == true then
 				local NewOwner = Players[math.random(1, #Players)]
@@ -453,6 +454,28 @@ function module:IsPartyServer()
 	return IsPartyServerValue
 end
 
+function module:getPartyPlayerIsIn(Player)
+	if IsClient() then
+		return nil
+	end
+	if IsPlayer(Player, 1) == false then
+		return nil
+	end
+
+	local parties = module:GetPartys()
+
+	for i,v in pairs(parties) do
+		for ind,val in pairs(v.Players) do
+
+			if val == Player then
+				return v
+			end
+		end
+	end
+	return nil
+
+end
+
 if RunService:IsServer() then
 	if module.IsPartyServer() then
 		local function RemoveServer()
@@ -477,4 +500,4 @@ if RunService:IsServer() then
 	end
 end
 
-return
+return module
