@@ -212,6 +212,13 @@ boolean
 
 --------------------------------------------------
 
+PartyService:getPartyPlayerIsIn() - returns the party that the player is in
+
+returns:
+@Party = table - Party that the player is in
+
+--------------------------------------------------
+
 PartyService:SetPartyServerEmulator() - starts an emulator on the current server by activating the "PartyServerStarted" event and returning the "IsPartyServer()" as true (it will only emulate if you are in roblox studio!)
 
 returns:
