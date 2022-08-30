@@ -382,7 +382,7 @@ function module:RemovePlayer(PlayerToRemove, Party)
 	if FindPlayer then
 		local IsOwner = module:IsPartyOwner(PlayerToRemove, Party)
 		local Players = module:GetPlayersInParty(Party)
-		table.remove(Players, PlayerToRemove)
+		table.remove(Players, FindPLayer)
 		if #Players > 0 then
 			if IsOwner == true then
 				local NewOwner = Players[math.random(1, #Players)]
