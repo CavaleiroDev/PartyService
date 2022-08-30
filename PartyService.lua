@@ -353,7 +353,7 @@ function module:AddPlayer(Player, Party)
 	if IsParty(Party, 2) == false then
 		return nil
 	end
-	if #Party.MaxPlayers ~= 0 then
+	if Party.MaxPlayers ~= 0 then
 		if #Party.Players >= Party.MaxPlayers then
 			return nil
 		end
