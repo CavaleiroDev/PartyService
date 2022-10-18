@@ -1,29 +1,220 @@
--- must be inside PartyService.lua and be a module script
-local settings = {}
+--[[
 
---[[ Important ]]--
-
-settings.Version = "v2.1" -- dont change this
-
---[[ Invite Code ]]--
-settings.InviteCodeEnabled = true
-
-settings.Letters = {"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"}
-settings.Numbers = {1,2,3,4,5,6,7,8,9,0}
+-------[Events]------
 
 
--- %l = random lower letter
--- %L = random upper letter
--- %a = random lower or upper letter
--- %n = random number
--- %r = random lower digit
--- %R = random upper digit
--- %x = random lower or upper digit
-settings.InviteFormat = "%l%l%l%l-%n%n%n"
 
---[[ Debug ]]--
 
-settings.WarnOutdated = true -- warns if the module is outdated, it is necessary to have http requests enabled in your game
-settings.WarnDeprecated = true -- not implemented
 
-return settings
+--------------------------------------------------
+
+PartyService.Created:Connect(function(CreatedParty) - fires when a party is created
+
+@CreatedParty = table - party table
+
+--------------------------------------------------
+
+PartyService.Deleted:Connect(function() - fires when a party is deleted
+
+--------------------------------------------------
+
+PartyService.PlayerAdded:Connect(function(Party, Player) - fires when a player enter in a party
+
+@Party = table - party table
+@Player = Instance - player who joined the party
+
+--------------------------------------------------
+
+PartyService.PlayerKicked:Connect(function(PartyOwner, Player, Party) - fires when a player is kicked from a party
+
+@PartyOwner = Instance - the party owner that kicked the player
+@Player = Instance - the player that was kicked
+@Party = table - party table
+
+--------------------------------------------------
+
+PartyService.PlayerRemoved:Connect(function(Player, Party) - fires when a player is removed from a party
+
+@Player = Instance - the player that was removed
+@Party = table - party table
+
+--------------------------------------------------
+
+PartyService.PartyServerStarted:Connect(AccessCode) - fires when a server created by a party is started
+
+@AccessCode = string - code to join the same server using the TeleportService
+
+--------------------------------------------------
+
+PartyService.OwnerChanged:Connect(function(Party, NewOwner, OldOwner)) - fires when a party owner is changed
+
+@Party = table - party table
+@NewOwner = Instance - the new party owner
+@OldOwner = Instance - the old party owner
+
+--------------------------------------------------
+
+Party.PlayerAdded:Connect(function(Player)) - fires when a player joins a specific party
+
+@Player = Instance - player who joined the party
+
+--------------------------------------------------
+
+Party.PlayerRemoved:Connect(function(Player)) - fires when a player is removed from a a specific party
+
+@Player = Instance - the player that was removed
+
+--------------------------------------------------
+
+Party.PlayerKicked:Connect(function(PartyOwner, Player)) - fires when a player is kicked from a specific party
+
+@PartyOwner = Instance - the owner of the party
+@Player = Instance - the player that was kicked
+
+--------------------------------------------------
+
+Party.PartyOwnerChanged:Connect(function(NewOwner, OldOwner)) - fires when the owner is changed in a specific party
+
+@NewOwner = Instance - new party owner
+@OldOwner = Instance - old party owner
+
+--------------------------------------------------
+
+
+
+-----[Functions]-----
+
+
+
+
+
+PartyService:Create(Owner, PlaceId, Name, MaxPlayers) - creates a party!
+
+@Owner = Instance - the player creating the party
+@PlaceId = number - the id of the place to be teleported when the party starts
+@Name = string (optional) - the name of the party, if it is nil the game will use: "Player`s Party"
+@MaxPlayers = number (optional) - the maximum number of players in the party, put 0 or null for unlimited players
+
+returns:
+table with all party information
+
+--------------------------------------------------
+
+PartyService:Delete(Party) - deletes a party!
+
+@Party = table - must be the table returned from PartyService:Create()!
+
+--------------------------------------------------
+
+PartyService:StartParty(Party) - start a party and teleport players in it to the place
+
+@Party = table - must be the table returned from PartyService:Create()!
+
+--------------------------------------------------
+
+PartyService:TeleportToLobby(LobbyId, Players) - teleports players from a match back to the lobby
+
+@LobbyId = number - the id of the lobby to be teleported
+@Players = table - a table of players to be teleported back to the lobby
+
+--------------------------------------------------
+
+PartyService:AddPlayer(Player, Party) - add a player to a party
+
+@Player = Instance - the player to be added to the party
+@Party = table - must be the table returned from PartyService:Create()!
+
+--------------------------------------------------
+
+PartyService:RemovePlayer(Player, Party) - remove a player from a party, usually used when a player presses a button to leave the party
+
+@Player = Instance - the player to be removed from the party
+@Party = table - must be the table returned from PartyService:Create()!
+
+--------------------------------------------------
+
+PartyService:KickPlayer(Player, Party) - kicks a player from a party, usually used when the party owner kicks a player
+
+@Player = Instance - the player to be kicked from the party
+@Party = table - must be the table returned from PartyService:Create()!
+
+returns:
+boolean - if succeed
+succeedMessage - message
+
+--------------------------------------------------
+
+PartyService:GetPlayersInParty(Party) - get a list of players in a specific party
+
+@Party = table - must be the table returned from PartyService:Create()!
+
+returns:
+table with the players in the party
+
+--------------------------------------------------
+
+PartyService:IsPlayerInParty(Player, Party) - checks if a player is in a specific party
+
+@Player = Instance - the player to be checked
+@Party = table - must be the table returned from PartyService:Create()!
+
+returns:
+boolean
+
+--------------------------------------------------
+
+PartyService:GetPartyById(PartyId) - get a party by its id
+
+@PartyId = number - the party id
+
+returns:
+party with the same id
+
+--------------------------------------------------
+
+PartyService:GetPartys() - returns a table with all the partys
+
+returns:
+table
+
+--------------------------------------------------
+
+PartyService:GetPartyOwner(Party) - returns the party owner
+
+@Party = table - must be the table returned from PartyService:Create()!
+
+returns:
+Instance (Player)
+
+--------------------------------------------------
+
+PartyService:IsPartyOwner(Player, Party) - returns if a specific player is the party owner
+
+@Player = Instance - the player to check if it is the party owner
+@Party = table - must be the table returned from PartyService:Create()!
+
+returns:
+boolean
+
+--------------------------------------------------
+
+PartyService:SetPartyOwner(NewOwner, Party) - set a new owner for a party
+
+@NewOwner = Instance - the new owner
+@Party = table -  must be the table returned from PartyService:Create()!
+
+--------------------------------------------------
+
+PartyService:IsPartyServer() - check if players were teleported to the current server through a party
+
+returns:
+boolean
+
+--------------------------------------------------
+
+PartyService:SetPartyServerEmulator() - starts an emulator on the current server by activating the "PartyServerStarted" event and returning the "IsPartyServer()" as true (it will only emulate if you are in roblox studio!)
+
+returns:
+boolean
+
+]]--
