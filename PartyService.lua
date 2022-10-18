@@ -15,7 +15,7 @@ end
 local module = {}
 
 
-local Partys = {}
+local Parties = {}
 local IsPartyServerValue = false
 local IsPartyServerEmulator = false
 local CurrentPartyInfo
@@ -171,13 +171,17 @@ function module:Create(Owner: Player, PlaceId: number, Name: string, MaxPlayers:
 		warn(string.format(Errors[400.1], 2, "number",  typeof(PlaceId)))
 		return nil
 	end
+	if module:GetPartyPlayerIsIn(Owner) ~= nil then
+		warn(Owner.Name.." is already in a party")
+		return nil
+	end
 	local PartyPlayerAddedEvent = Instance.new("BindableEvent")
 	local PartyPlayerRemovedEvent = Instance.new("BindableEvent")
 	local PartyPlayerKickedEvent = Instance.new("BindableEvent")
 	local PartyOwnerChangedEvent = Instance.new("BindableEvent")
 	
 	local PartyInfo = {
-		["Id"] = #Partys+1,
+		["Id"] = #Parties+1,
 		["Name"] = Name,
 		["Players"] = {
 			Owner,
@@ -206,7 +210,7 @@ function module:Create(Owner: Player, PlaceId: number, Name: string, MaxPlayers:
 	if Settings.InviteCodeEnabled == true then
 		PartyInfo["InviteCode"] = module.GetRandomInviteCode()
 	end
-	table.insert(Partys, PartyInfo)
+	table.insert(Parties, PartyInfo)
 	CreatedEvent:Fire(PartyInfo)
 	PlayerAddedEvent:Fire(Owner, PartyInfo)
 	return PartyInfo
@@ -310,7 +314,7 @@ function module:Delete(Party: "PartyTable")
 	for i, v in pairs(module:GetPlayersInParty(Party)) do
 		module:RemovePlayer(v, Party)
 	end
-	table.remove(Partys, Party.Id)
+	table.remove(Parties, Party.Id)
 	DeletedEvent:Fire()
 end
 
@@ -338,7 +342,7 @@ function module:GetParties(): "PartiesTable"
 	if IsClient() then
 		return nil
 	end
-	return Partys
+	return Parties
 end
 
 function module:GetPartyById(PartyId: number): "PartyTable"
@@ -349,7 +353,7 @@ function module:GetPartyById(PartyId: number): "PartyTable"
 		warn(Errors[400.1]:format(1, "number", typeof(PartyId)))
 		return nil
 	end
-	for i, v in pairs(Partys) do
+	for i, v in pairs(Parties) do
 		if PartyId == v.Id then
 			return v
 		end
@@ -420,7 +424,7 @@ end
 
 function module:GetPartyByInviteCode(code)
 	if Settings.InviteCodeEnabled ~= true then return end
-	for i, v in pairs(Partys) do
+	for i, v in pairs(Parties) do
 		if v["InviteCode"] == code then
 			return v
 		end
@@ -452,6 +456,9 @@ function module:AddPlayer(Player: Player, Party: "PartyTable or string")
 		if #CurrentParty.Players >= CurrentParty.MaxPlayers then
 			return false, "player limit reached"
 		end
+	end
+	if module:GetPartyPlayerIsIn(Player) ~= nil then
+		return false, "player is already in a party"
 	end
 	if module:PlayerIsInParty(Player, CurrentParty) == false then
 		table.insert(CurrentParty.Players, Player)
@@ -546,7 +553,7 @@ function module.CanUseInviteCode(code)
 	if typeof(code) ~= "string" then
 		return nil
 	end
-	for i, v in pairs(Partys) do
+	for i, v in pairs(Parties) do
 		if v["InviteCode"] == code then
 			return false
 		end
