@@ -14,7 +14,7 @@ party service is an open-source module that facilitates the creation of party sy
 * open-source
 
 ***Get the Model***
-[*Roblox*](https://www.roblox.com/library/9771730581) | [*GitHub*](https://github.com/CavaleiroDev/PartyService) | [*some random site i published it*](https://devforum.roblox.com/t/1816870)
+[*Roblox*](https://www.roblox.com/library/9771730581) | [*GitHub*](https://github.com/CavaleiroDev/PartyService) | [*a random site i published it*](https://devforum.roblox.com/t/1816870) | [*Documentation*](https://github.com/CavaleiroDev/PartyService/wiki)
 
 ****How to Use****
 
