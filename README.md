@@ -10,6 +10,7 @@ party service is an open-source module that facilitates the creation of party sy
 * frequently updated
 * FREE
 * send data between places
+* available documentation
 * idk, it's cool! i guess
 * open-source
 
