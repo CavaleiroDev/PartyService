@@ -11,10 +11,7 @@ if RunService:IsServer() then -- in case of a client accesses the module
 	ActivePartyServers = DatastoreService:GetDataStore("ActivePartyServers")
 end
 
-
 local module = {}
-
-
 local Parties = {}
 local IsPartyServerValue = false
 local IsPartyServerEmulator = false
@@ -53,7 +50,23 @@ module.PlayerRemoved = PlayerRemovedEvent.Event
 module.OwnerChanged = OwnerChangedEvent.Event
 module.ServerStarted = ServerStartedEvent.Event
 
-
+-- // Basic Typechecking (@Hanselkek, github)
+export type PartyTable = {
+	Id: number,
+	Name: string,
+	Players: {Player?},
+	PlayerAdded: RBXScriptConnection,
+	PlayerRemoved: RBXScriptConnection,
+	PlayerKicked: RBXScriptConnection,
+	PartyOwnerChanged: RBXScriptConnection,
+	OwnerId: number,
+	PlaceId: number,
+	Data: {any?}?,
+	MaxPlayers: number,
+	SetAsync: () -> (),
+	GetAsync: () -> (),
+	InviteCode: string,
+}
 
 local function IsParty(party, parameter)
 	if typeof(parameter) ~= "number" then parameter = 0 end
@@ -149,7 +162,7 @@ function module:SetPartyServerEmulator(FakePartyData: any): boolean
 	return true, "Successfully started emulator for party system."
 end
 
-function module:Create(Owner: Player, PlaceId: number, Name: string, MaxPlayers: number): "PartyTable"
+function module:Create(Owner: Player, PlaceId: number, Name: string, MaxPlayers: number): PartyTable
 	if IsClient() then
 		return nil
 	end
@@ -253,7 +266,7 @@ function module:TeleportToLobby(LobbyId: number, Players: {Player})
 	end
 end
 
-function module:StartParty(Party: "PartyTable")
+function module:StartParty(Party: PartyTable)
 	if IsClient() then
 		return nil
 	end
@@ -283,7 +296,7 @@ function module:StartParty(Party: "PartyTable")
 			["InviteCode"] = Party.InviteCode
 		}
 		for i, v in pairs(Party.Players) do
-			table.insert(PartyInfoToSave, v.UserId)
+			table.insert(PartyInfoToSave.Players, v.UserId)
 		end
 		local PartyDataToSave = HttpService:JSONEncode(PartyData)
 		local dataToSave = {
@@ -304,7 +317,7 @@ function module:StartParty(Party: "PartyTable")
 	end
 end
 
-function module:Delete(Party: "PartyTable")
+function module:Delete(Party: PartyTable)
 	if RunService:IsClient() then
 		return nil
 	end
@@ -318,7 +331,7 @@ function module:Delete(Party: "PartyTable")
 	DeletedEvent:Fire()
 end
 
-function module:PlayerIsInParty(Player: Player, Party: "PartyTable"): boolean
+function module:PlayerIsInParty(Player: Player, Party: PartyTable): boolean
 	if IsPlayer(Player, 1) == false then
 		return nil
 	end
@@ -345,7 +358,7 @@ function module:GetParties(): "PartiesTable"
 	return Parties
 end
 
-function module:GetPartyById(PartyId: number): "PartyTable"
+function module:GetPartyById(PartyId: number): PartyTable
 	if IsClient() then
 		return nil
 	end
@@ -361,7 +374,7 @@ function module:GetPartyById(PartyId: number): "PartyTable"
 	return nil
 end
 
-function module:GetPartyOwner(Party: "PartyTable"):Player
+function module:GetPartyOwner(Party: PartyTable):Player
 	if IsParty(Party, 1) == false then
 		return nil 
 	end
@@ -372,7 +385,7 @@ function module:GetPartyOwner(Party: "PartyTable"):Player
 	end
 end
 
-function module:IsPartyOwner(Player: Player, Party: "PartyTable"): boolean
+function module:IsPartyOwner(Player: Player, Party: PartyTable): boolean
 	if IsPlayer(Player, 1) == false then
 		return nil
 	end
@@ -386,7 +399,7 @@ function module:IsPartyOwner(Player: Player, Party: "PartyTable"): boolean
 	end
 end
 
-function module:SetPartyOwner(NewOwner: Player, Party: "PartyTable")
+function module:SetPartyOwner(NewOwner: Player, Party: PartyTable)
 	if IsClient() then
 		return nil
 	end
@@ -406,7 +419,7 @@ function module:SetPartyOwner(NewOwner: Player, Party: "PartyTable")
 	OwnerChangedEvent:Fire(Party, NewOwner, OldOwner)
 end
 
-function module:IsPlayerInParty(Player: Player, Party: "PartyTable"): boolean
+function module:IsPlayerInParty(Player: Player, Party: PartyTable): boolean
 	for i, v in pairs(module:GetPlayersInParty(Party)) do
 		if v == Player then
 			return true
@@ -415,7 +428,7 @@ function module:IsPlayerInParty(Player: Player, Party: "PartyTable"): boolean
 	return false
 end
 
-function module:GetPlayersInParty(Party: "PartyTable"): {Player}
+function module:GetPlayersInParty(Party: PartyTable): {Player}
 	if IsParty(Party, 1) == false then
 		return nil
 	end
@@ -470,7 +483,7 @@ function module:AddPlayer(Player: Player, Party: "PartyTable or string")
 	return true
 end
 
-function module:RemovePlayer(PlayerToRemove: Player, Party: "PartyTable"): boolean
+function module:RemovePlayer(PlayerToRemove: Player, Party: PartyTable): boolean
 	if IsClient() then
 		return nil
 	end
@@ -503,7 +516,7 @@ function module:RemovePlayer(PlayerToRemove: Player, Party: "PartyTable"): boole
 	end
 end
 
-function module:KickPlayer(PlayerToKick: Player, Party: "PartyTable"): boolean
+function module:KickPlayer(PlayerToKick: Player, Party: PartyTable): boolean
 	if IsClient() then
 		return nil
 	end
@@ -647,7 +660,7 @@ function module:GetCurrentPartyData(): "CurrentPartyData"
 	end
 end
 
-function module:GetPartyPlayerIsIn(Player: Player): "PartyTable" -- made by @keirahela (github)
+function module:GetPartyPlayerIsIn(Player: Player): PartyTable -- made by @keirahela (github)
 	if IsClient() then
 		return nil
 	end
