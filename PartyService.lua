@@ -16,8 +16,8 @@ local module = {}
 local Parties = {}
 local IsPartyServerValue = false
 local IsPartyServerEmulator = false
-local CurrentPartyInfo
-local CurrentPartyData
+local CurrentPartyInfo : {any?}?
+local CurrentPartyData : {any?}?
 
 local Errors = {
 	[200] = "[200] Success - %s",
@@ -64,12 +64,18 @@ export type PartyTable = {
 	PlaceId: number,
 	Data: {any?}?,
 	MaxPlayers: number,
-	SetAsync: () -> (),
-	GetAsync: () -> (),
+	SetAsync: (self: any) -> (),
+	GetAsync: (self: any) -> (),
 	InviteCode: string,
+	Bindables: {
+		PlayerAdded: BindableEvent,
+		PlayerKicked: BindableEvent,
+		PlayerRemoved: BindableEvent,
+		PartyOwnerChanged: BindableEvent,
+	}
 }
 
-local function IsParty(party, parameter)
+local function IsParty(party, parameter): (boolean, string?)
 	if typeof(parameter) ~= "number" then parameter = 0 end
 	if typeof(party) == "table" then
 		if party.Id ~= nil and party.Name ~= nil and party.Players ~= nil and party.PlaceId ~= nil then
@@ -84,7 +90,7 @@ local function IsParty(party, parameter)
 	end
 end
 
-local function IsPlayer(player, parameter)
+local function IsPlayer(player, parameter): (boolean, string?)
 	if typeof(parameter) ~= "number" then parameter = 0 end
 	if typeof(player) == "Instance" then
 		if player:IsA("Player") then
@@ -99,7 +105,7 @@ local function IsPlayer(player, parameter)
 	end
 end
 
-local function IsClient(w)
+local function IsClient(w): boolean
 	if RunService:IsClient() then
 		if w ~= false then
 			warn(string.format(Errors[403], "it is not possible to execute this function on the client!"))
@@ -110,7 +116,7 @@ local function IsClient(w)
 	end
 end
 
-local function IsStudio(w)
+local function IsStudio(w): boolean
 	if RunService:IsStudio() then
 		if w ~= false then
 			warn(string.format(Errors[403], "it is not possible to execute this function, Server/Client is in Roblox Studio!"))
@@ -122,7 +128,7 @@ local function IsStudio(w)
 end
 
 
-function module:SetPartyServerEmulator(FakePartyData: any): boolean
+function module:SetPartyServerEmulator(FakePartyData: any): (boolean?, string?)
 	if IsStudio(false) == false then
 		return nil
 	end
@@ -163,7 +169,7 @@ function module:SetPartyServerEmulator(FakePartyData: any): boolean
 	return true, "Successfully started emulator for party system."
 end
 
-function module:Create(Owner: Player, PlaceId: number, Name: string, MaxPlayers: number): PartyTable
+function module:Create(Owner: Player, PlaceId: number, Name: string, MaxPlayers: number): PartyTable?
 	if IsClient() then
 		return nil
 	end
@@ -258,13 +264,14 @@ function module:TeleportToLobby(LobbyId: number, Players: {Player})
 		local yes2, err2 = pcall(function()
 			ActivePartyServers:SetAsync(TeleportResult.PrivateServerId, TeleportResult.ReservedServerAccessCode)
 		end)
-		if yes2 then
-		else
+		if not yes2 then
 			warn(string.format(Errors[500], err2))
 		end
 	else
 		warn(string.format(Errors[500], err))
 	end
+
+	return nil
 end
 
 function module:StartParty(Party: PartyTable)
@@ -316,6 +323,8 @@ function module:StartParty(Party: PartyTable)
 	else
 		warn(string.format(Errors[500], err))
 	end
+
+	return nil
 end
 
 function module:Delete(Party: PartyTable)
@@ -325,14 +334,16 @@ function module:Delete(Party: PartyTable)
 	if not IsParty(Party, 1) then
 		return nil
 	end
-	for i, v in pairs(module:GetPlayersInParty(Party)) do
-		module:RemovePlayer(v, Party)
+	for i, v in pairs(self:GetPlayersInParty(Party)) do
+		self:RemovePlayer(v, Party)
 	end
 	table.remove(Parties, Party.Id)
 	DeletedEvent:Fire()
+
+	return nil
 end
 
-function module:PlayerIsInParty(Player: Player, Party: PartyTable): boolean
+function module:PlayerIsInParty(Player: Player, Party: PartyTable): boolean?
 	if IsPlayer(Player, 1) == false then
 		return nil
 	end
@@ -352,14 +363,14 @@ end
 	return module:GetParties()
 ]]--end
 
-function module:GetParties(): "PartiesTable"
+function module:GetParties(): {PartyTable}?
 	if IsClient() then
 		return nil
 	end
 	return Parties
 end
 
-function module:GetPartyById(PartyId: number): PartyTable
+function module:GetPartyById(PartyId: number): PartyTable?
 	if IsClient() then
 		return nil
 	end
@@ -375,7 +386,7 @@ function module:GetPartyById(PartyId: number): PartyTable
 	return nil
 end
 
-function module:GetPartyOwner(Party: PartyTable):Player
+function module:GetPartyOwner(Party: PartyTable): Player?
 	if IsParty(Party, 1) == false then
 		return nil 
 	end
@@ -384,9 +395,11 @@ function module:GetPartyOwner(Party: PartyTable):Player
 			return v
 		end
 	end
+
+	return nil
 end
 
-function module:IsPartyOwner(Player: Player, Party: PartyTable): boolean
+function module:IsPartyOwner(Player: Player, Party: PartyTable): boolean?
 	if IsPlayer(Player, 1) == false then
 		return nil
 	end
@@ -400,7 +413,7 @@ function module:IsPartyOwner(Player: Player, Party: PartyTable): boolean
 	end
 end
 
-function module:SetPartyOwner(NewOwner: Player, Party: PartyTable)
+function module:SetPartyOwner(NewOwner: Player, Party: PartyTable) : (nil?, any?)
 	if IsClient() then
 		return nil
 	end
@@ -414,14 +427,17 @@ function module:SetPartyOwner(NewOwner: Player, Party: PartyTable)
 		warn(Errors[400]:format(NewOwner.Name.." is not in the Party."))
 		return nil, NewOwner.Name.." is not in the Party."
 	end
+
 	local OldOwner = module:GetPartyOwner(Party)
 	Party.OwnerId = NewOwner.UserId
 	Party.Bindables.PartyOwnerChanged:Fire(NewOwner, OldOwner)
 	OwnerChangedEvent:Fire(Party, NewOwner, OldOwner)
+
+	return nil
 end
 
 function module:IsPlayerInParty(Player: Player, Party: PartyTable): boolean
-	for i, v in pairs(module:GetPlayersInParty(Party)) do
+	for i, v in pairs(self:GetPlayersInParty(Party)) do
 		if v == Player then
 			return true
 		end
@@ -429,20 +445,22 @@ function module:IsPlayerInParty(Player: Player, Party: PartyTable): boolean
 	return false
 end
 
-function module:GetPlayersInParty(Party: PartyTable): {Player}
+function module:GetPlayersInParty(Party: PartyTable): {Player?}?
 	if IsParty(Party, 1) == false then
 		return nil
 	end
 	return Party.Players
 end
 
-function module:GetPartyByInviteCode(code)
-	if Settings.InviteCodeEnabled ~= true then return end
+function module:GetPartyByInviteCode(code): PartyTable?
+	if Settings.InviteCodeEnabled ~= true then return nil end
 	for i, v in pairs(Parties) do
 		if v["InviteCode"] == code then
 			return v
 		end
 	end
+
+	return nil
 end
 
 function module:AddPlayer(Player: Player, Party: PartyTable | string)
@@ -460,7 +478,7 @@ function module:AddPlayer(Player: Player, Party: PartyTable | string)
 		-- is party
 		CurrentParty = Party
 	elseif typeof(Party) == "string" then
-		if Settings.InviteCodeEnabled ~= true then warn("Invite Code is disabled") return end
+		if Settings.InviteCodeEnabled ~= true then warn("Invite Code is disabled"); return end
 		local partyByInvite = module:GetPartyByInviteCode(Party)
 		if partyByInvite == nil then return false, "invalid invite code" end
 		-- is invite
@@ -484,7 +502,7 @@ function module:AddPlayer(Player: Player, Party: PartyTable | string)
 	return true
 end
 
-function module:RemovePlayer(PlayerToRemove: Player, Party: PartyTable): boolean
+function module:RemovePlayer(PlayerToRemove: Player, Party: PartyTable): (boolean?, string?)
 	if IsClient() then
 		return nil
 	end
@@ -517,7 +535,7 @@ function module:RemovePlayer(PlayerToRemove: Player, Party: PartyTable): boolean
 	end
 end
 
-function module:KickPlayer(PlayerToKick: Player, Party: PartyTable): boolean
+function module:KickPlayer(PlayerToKick: Player, Party: PartyTable): boolean?
 	if IsClient() then
 		return nil
 	end
@@ -544,7 +562,7 @@ function module:KickPlayer(PlayerToKick: Player, Party: PartyTable): boolean
 	end
 end
 
-function module:IsPartyServer()
+function module:IsPartyServer(): boolean?
 	if IsClient() then
 		return nil
 	end
@@ -649,19 +667,23 @@ function module.GetRandomInviteCode()
 	end
 end
 
-function module:GetCurrentPartyInfo(): "Table"
+function module:GetCurrentPartyInfo(): {any?}?
 	if IsPartyServerValue == true then
 		return CurrentPartyInfo
 	end
+
+	return nil
 end
 
-function module:GetCurrentPartyData(): "CurrentPartyData"
+function module:GetCurrentPartyData(): {any?}?
 	if IsPartyServerValue == true then
 		return CurrentPartyData
 	end
+
+	return nil
 end
 
-function module:GetPartyPlayerIsIn(Player: Player): PartyTable -- made by @keirahela (github)
+function module:GetPartyPlayerIsIn(Player: Player): PartyTable? -- made by @keirahela (github)
 	if IsClient() then
 		return nil
 	end
@@ -687,11 +709,11 @@ task.spawn(function() -- checks and warns if the module is outdated, it is neces
 	if IsClient(false) then return end
 	local ServerVersion
 	local ClientVersion = Settings.Version
-	local y, n = pcall(function()
+	local ok, _result = pcall(function()
 		ServerVersion = HttpService:GetAsync("https://PartyService.cavaleirodev.repl.co")
 	end)
 	if Settings.WarnOutdated == true then
-		if y then
+		if ok then
 			if ServerVersion ~= ClientVersion then
 				warn(Errors[427]:format(ServerVersion, ClientVersion)) -- go to https://www.roblox.com/library/9771730581 to update your module
 			else
@@ -705,10 +727,10 @@ if RunService:IsServer() then
 	if game.PrivateServerId ~= "" then
 		--local accessCode -- moved
 		local Party
-		local y, n = pcall(function()
+		local ok, result = pcall(function()
 			Party = ActivePartyServers:GetAsync(game.PrivateServerId) --accessCode = ActivePartyServers:GetAsync(game.PrivateServerId)
 		end)
-		if y then
+		if ok then
 			IsPartyServerValue = true
 			local PartyData = HttpService:JSONDecode(Party["PartyData"])
 			local PartyInfo = Party["PartyInfo"]
@@ -723,7 +745,7 @@ if RunService:IsServer() then
 			if IsPartyServerEmulator ~= true then
 				IsPartyServerValue = false
 			end
-			warn(Errors[500]:format("error getting PartyData from DataStore. ("..n..")"))
+			warn(Errors[500]:format("error getting PartyData from DataStore. ("..result..")"))
 			--warn(Errors[500]:format("error getting accessCode from DataStore. ("..err..")"))
 		end
 	end
@@ -732,10 +754,10 @@ end
 if RunService:IsServer() then
 	if module:IsPartyServer() then
 		local function RemoveServer()
-			local y, err = pcall(function()
+			local ok, err = pcall(function()
 				ActivePartyServers:RemoveAsync(game.PrivateServerId)
 			end)
-			if y then
+			if ok then
 				warn("server removed")
 			else
 				warn(Errors[500]:format("error removing server: "..game.PrivateServerId.." from list. ("..err..")"))
